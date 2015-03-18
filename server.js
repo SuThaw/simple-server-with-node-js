@@ -1,19 +1,35 @@
-var pages = [{route:'',output:'Woohoo!'},{route:'about',output:'A simple rouing with Node example'},
-				{route:'another page',output:function(){return 'here is ' + this.route;}}
-			];
 var http = require('http');
-var path = require('path');
+var url = require('url');
+var pages = [
+	{id:'1', route:'',output:'Woohoo!'},
+	{id:'2', route:'about',output:'A simple routing with Node Example'},
+	{id:'3',route:'another page',output:function(){
+		return 'Here\'s ' + this.route;
+
+	}}
+];
+
 http.createServer(function(request,response){
-	var lookup = path.basename(decodeURI(request.url));
-	pages.forEach(function(page){
-		if(page.route === lookup){
-			response.writeHead(200,{'Content-Type':'text/html'});
-			response.end(typeof page.output === 'function' ? page.output():page.output);
-		}
-	});
+	var id = url.parse(decodeURI(request.url),true).query.id;
+
+	
+	if(id){
+		
+		pages.forEach(function(page){
+			
+			if(page.id === id){
+				
+				response.writeHead(200,{'Content-Type':'text/html'});
+				response.end(typeof page.output === 'function' ? page.output() : page.output);
+			}
+		});
+	
+	}
 	if(!response.finished){
 		response.writeHead(404);
-		response.end('Page not Found');
+		response.end('Page not found');
 	}
-	
-}).listen(8080);
+
+	response.writeHead(200,{'Content-Type':'text/html'});
+	response.end('Woooo');
+}).listen(8080);	
