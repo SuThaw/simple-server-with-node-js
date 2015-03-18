@@ -1,35 +1,32 @@
 var http = require('http');
-var url = require('url');
-var pages = [
-	{id:'1', route:'',output:'Woohoo!'},
-	{id:'2', route:'about',output:'A simple routing with Node Example'},
-	{id:'3',route:'another page',output:function(){
-		return 'Here\'s ' + this.route;
-
-	}}
-];
-
+var path = require('path');
+var fs = require('fs');
+var mimeTypes = {
+	'.js' : 'text/javascript',
+	'.html': 'text/html',
+	'.css' : 'text/css'
+};
 http.createServer(function(request,response){
-	var id = url.parse(decodeURI(request.url),true).query.id;
-
+	var lookup = path.basename(decodeURI(request.url)) || 'index.html';
 	
-	if(id){
-		
-		pages.forEach(function(page){
+	var f = 'content/' + lookup;
+	fs.exists(f,function(exists){
+		if(exists){
+			fs.readFile(f,function(err,data){
+				if(err) {
+					response.writeHead(500);
+					response.end('Server Error!');
+					return;
+				}
+				var headers = {'Content-type':mimeTypes[path.extname(lookup)]};
+				response.writeHead(200,headers);
+				response.end(data);
+			});
 			
-			if(page.id === id){
-				
-				response.writeHead(200,{'Content-Type':'text/html'});
-				response.end(typeof page.output === 'function' ? page.output() : page.output);
-			}
-		});
-	
-	}
-	if(!response.finished){
+			return;
+		}
+		
 		response.writeHead(404);
-		response.end('Page not found');
-	}
-
-	response.writeHead(200,{'Content-Type':'text/html'});
-	response.end('Woooo');
-}).listen(8080);	
+		response.end('Not Found');
+	});
+}).listen(3000);
